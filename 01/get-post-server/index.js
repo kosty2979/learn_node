@@ -72,19 +72,11 @@ function checkRequest(filePath, res){
 
 function sendFile(filePath, res){
 
-    let fileDir = __dirname +  '/files'
-
     if (filePath === '/') {
-        // отдачу файлов следует переделать "правильно", через потоки, с нормальной обработкой ошибок
-        fs.readFile(__dirname + '/public/index.html', (err, content) => {
-            if (err) throw err;
-            res.setHeader('Content-Type', 'text/html;charset=utf-8');
-            res.end(content);
-        });
-
+        let path = __dirname + '/public/index.html';
+        sendingFile( path, res );
     } else {
         let fileDir = path.normalize( __dirname+'/files' );
-        
         filePath = path.normalize( path.join( fileDir, filePath) );
 
         if( filePath.indexOf(fileDir)!== 0){
@@ -95,15 +87,27 @@ function sendFile(filePath, res){
 
         fs.stat(filePath, (err, stats)=>{
             if(err ||!stats.isFile()){
-                console.log("read error");
                 res.statusCode= 404;
                 res.end('File not found');
                 return
             }
-            res.statusCode= 200;
-            res.end('ok');
         })
 
-
+        sendingFile( filePath, res );
     }
+}
+
+function sendingFile( path, res ){
+    let stream = new fs.ReadStream( path );
+    stream.pipe(res);
+
+    stream.on('error',(err)=>{
+        res.statusCode=500;
+        res.end('Server error');
+        console.error(err)
+    });
+
+    res.on('close', ()=>{
+        stream.destroy()
+    })
 }
