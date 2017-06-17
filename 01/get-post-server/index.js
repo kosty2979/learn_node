@@ -30,28 +30,80 @@
 
 'use strict';
 
+let http = require('http');
 let url = require('url');
 let fs = require('fs');
+let path = require('path');
 
-require('http').createServer(function(req, res) {
 
-  let pathname = decodeURI(url.parse(req.url).pathname);
+http.createServer((req, res)=>{
+    let filePath = url.parse(req.url).pathname;
 
-  switch(req.method) {
-  case 'GET':
-    if (pathname == '/') {
-      // отдачу файлов следует переделать "правильно", через потоки, с нормальной обработкой ошибок
-      fs.readFile(__dirname + '/public/index.html', (err, content) => {
-        if (err) throw err;
-        res.setHeader('Content-Type', 'text/html;charset=utf-8');
-        res.end(content);
-      });
-      return;
+    checkRequest(filePath, res);
+
+    switch (req.method) {
+        case 'GET':
+            sendFile(filePath, res);
+            break
+
+        default:
+            res.statusCode = 502;
+            res.end('Not implemented');
     }
 
-  default:
-    res.statusCode = 502;
-    res.end("Not implemented");
-  }
-
 }).listen(3000);
+
+function checkRequest(filePath, res){
+    try{
+        filePath = decodeURIComponent(filePath);
+    } catch(e){
+      res.statusCode = 400;
+      res.end('Bad request');
+      return
+    }
+
+    if(~filePath.indexOf('\0')){
+      res.statusCode = 400;
+      res.end('Bad request')
+        return
+    }
+
+}
+
+function sendFile(filePath, res){
+
+    let fileDir = __dirname +  '/files'
+
+    if (filePath === '/') {
+        // отдачу файлов следует переделать "правильно", через потоки, с нормальной обработкой ошибок
+        fs.readFile(__dirname + '/public/index.html', (err, content) => {
+            if (err) throw err;
+            res.setHeader('Content-Type', 'text/html;charset=utf-8');
+            res.end(content);
+        });
+
+    } else {
+        let fileDir = path.normalize( __dirname+'/files' );
+        
+        filePath = path.normalize( path.join( fileDir, filePath) );
+
+        if( filePath.indexOf(fileDir)!== 0){
+            res.statusCode= 404;
+            res.end('File not found');
+            return
+        }
+
+        fs.stat(filePath, (err, stats)=>{
+            if(err ||!stats.isFile()){
+                console.log("read error");
+                res.statusCode= 404;
+                res.end('File not found');
+                return
+            }
+            res.statusCode= 200;
+            res.end('ok');
+        })
+
+
+    }
+}
