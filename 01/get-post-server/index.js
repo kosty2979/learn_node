@@ -39,13 +39,18 @@ let path = require('path');
 http.createServer((req, res)=>{
     let filePath = url.parse(req.url).pathname;
 
-    checkRequest(filePath, res);
+    checkRequest( filePath, res );
 
     switch (req.method) {
         case 'GET':
-            sendFile(filePath, res);
+            sendFile( filePath, res );
+            break;
+        case 'POST':
+            saveFile( req, res );
+            break;
+        case 'DELETE':
+            deleteFile( filePath, res );
             break
-
         default:
             res.statusCode = 502;
             res.end('Not implemented');
@@ -64,7 +69,7 @@ function checkRequest(filePath, res){
 
     if(~filePath.indexOf('\0')){
       res.statusCode = 400;
-      res.end('Bad request')
+      res.end('Bad request');
         return
     }
 
@@ -110,4 +115,64 @@ function sendingFile( path, res ){
     res.on('close', ()=>{
         stream.destroy()
     })
+}
+
+function saveFile( req, res ){
+    let filePath = url.parse(req.url).pathname;
+    let fileDir = path.normalize( __dirname+'/files' );
+    filePath = path.normalize( path.join( fileDir, filePath) );
+
+    fs.stat(filePath, function(err, stats){
+        if (stats){
+            res.statusCode = 409;
+            res.end('File exist');
+            return;
+        } else{
+            savingFile(req, res, filePath )
+        }
+    })
+
+}
+
+function savingFile(req, res, filePath ){
+    let file='';
+    req
+        .on('readable', ()=>{
+            file += req.read();
+        })
+        .on('end', ()=>{
+            try{
+                if (file.length >1e6){
+                    res.statusCode = 413;
+                    res.end('File is too big');
+                    return
+                }
+                let stream = new fs.WriteStream( filePath );
+                stream.write(file);
+
+                stream.on('error',(err)=>{
+                    res.statusCode=500;
+                    res.end('Server error');
+                    console.error(err)
+                });
+
+                stream.end( ()=>{
+                    res.statusCode=200;
+                    res.end('file saved');
+                })
+            } catch(e){
+                res.statusCode = 400;
+                res.end("Bad request");
+                return;
+            }
+        })
+
+
+}
+
+
+function deleteFile( filePath, res ){
+    console.log(err)
+    res.statusCode= 200;
+    res.end = 'delete'
 }
