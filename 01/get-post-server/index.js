@@ -95,10 +95,12 @@ function sendFile(filePath, res){
                 res.statusCode= 404;
                 res.end('File not found');
                 return
+            } else {
+                sendingFile( filePath, res );
             }
         })
 
-        sendingFile( filePath, res );
+
     }
 }
 
@@ -153,7 +155,6 @@ function savingFile(req, res, filePath ){
                 stream.on('error',(err)=>{
                     res.statusCode=500;
                     res.end('Server error');
-                    console.error(err)
                 });
 
                 stream.end( ()=>{
@@ -172,7 +173,27 @@ function savingFile(req, res, filePath ){
 
 
 function deleteFile( filePath, res ){
-    console.log(err)
-    res.statusCode= 200;
-    res.end = 'delete'
+    let fileDir = path.normalize( __dirname+'/files' );
+    filePath = path.normalize( path.join( fileDir, filePath) );
+    fs.stat(filePath, (err, stats)=>{
+        if(err ||!stats.isFile()){
+            res.statusCode= 404;
+            res.end('File not found(delete)');
+            return
+        } else {
+            removeFile(filePath, res)
+        }
+    })
+}
+function removeFile(filePath, res){
+    fs.unlink(filePath, (err)=>{
+        if(err){
+            res.statusCode = 500;
+            res.end('Server Error');
+            return
+        }
+        res.statusCode = 200;
+        res.end('OK');
+    })
+
 }
