@@ -35,6 +35,8 @@
     const xhr = new XMLHttpRequest();
 
     xhr.onload = function() {
+      console.log(xhr)
+      //window.open(xhr.responseURL, "test")
       alert(`${xhr.status}: ${xhr.responseText}`);
     };
 
