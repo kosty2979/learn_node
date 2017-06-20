@@ -14,14 +14,7 @@ describe('server tests', () => {
     });
 
     it('get index.html', (done) => {
-        /*
-         1. запустить сервер
-         2. сделать GET запрос на /
-         3. дождаться ответа
-         4. прочитать с диска public/index.html
-         5. сравнить, что ответ сервера и файла с диска одинаковые
-         6. остановить сервер
-         */
+
         request('http://localhost:8888', (error, response, body) => {
             if (error) return done(error);
 
