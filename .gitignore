@@ -7,7 +7,6 @@ static/
 /dist
 /tmp
 /out-tsc
-package.json
 .eslintrc.js
 node_modules/
 *.map
