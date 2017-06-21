@@ -13,7 +13,7 @@ describe('Server tests:', () => {
         app.close(done);
     });
 
-    describe('GET request', () =>
+    describe('GET request', () => {
         it('get index.html', (done) => {
             request('http://localhost:8888/', (error, response, body) => {
                 if (error) return done(error);
@@ -23,8 +23,17 @@ describe('Server tests:', () => {
                 assert.equal(body, fileContent);
                 done();
             });
-        })
-    );
+        });
+
+
+        it('GET file', (done) => {
+            // const file = fs.readFileSync('test/small.txt').toString();
+            // fs.writeFileSync('files/small.txt', file, ()=>{
+            //
+            // });
+            done()
+        });
+    });
 
     describe('POST request', () => {
 
@@ -54,9 +63,11 @@ describe('Server tests:', () => {
             };
             request.post('http://localhost:8888/small.txt', {body: file}, (err, res) => {
                 assert.equal(res.statusCode, error.code);
-                assert.equal(res.body, error.text)
+                assert.equal(res.body, error.text);
 
-                done()
+                fs.unlink('files/small.txt', (err) => {
+                    done(err)
+                });
             })
         });
 
@@ -68,10 +79,16 @@ describe('Server tests:', () => {
             request.post('http://localhost:8888/big.png', {body: bigFile}, (req, res) => {
                 assert.equal(res.statusCode, error.code);
                 assert.equal(res.body, error.text);
-
-                done()
+                fs.readFile('files/big.png', (err, content) => {
+                    if (err) {
+                        assert.equal(err.code, 'ENOENT');
+                        done()
+                    } else {
+                        done(new Error("file saved and exist!!"))
+                    }
+                })
             })
-        })
+        });
 
 
     })
