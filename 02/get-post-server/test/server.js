@@ -14,12 +14,20 @@ describe('Server tests:', () => {
     });
 
     describe('GET request', () => {
-        it('get index.html', (done) => {
+
+        let fileContent;
+        let file;
+        before((done =>{
+            fileContent = fs.readFileSync('public/index.html');
+            file = fs.readFileSync('test/small.txt').toString();
+            fs.writeFileSync('files/small.txt', file );
+            done()
+
+        }));
+
+        it('GET index.html', (done) => {
             request('http://localhost:8888/', (error, response, body) => {
                 if (error) return done(error);
-
-                const fileContent = fs.readFileSync('public/index.html');
-
                 assert.equal(body, fileContent);
                 done();
             });
@@ -27,20 +35,39 @@ describe('Server tests:', () => {
 
 
         it('GET file', (done) => {
-            // const file = fs.readFileSync('test/small.txt').toString();
-            // fs.writeFileSync('files/small.txt', file, ()=>{
-            //
-            // });
-            done()
+            request('http://localhost:8888/small.txt', (error, res, body ) =>{
+                if ( error )return done(error);
+                assert(res.statusCode, 200)
+                assert.equal(body, file);
+                done();
+            })
         });
+
+        it('GET non-existent file', (done) => {
+            const error={
+                code: 404,
+                text: 'Not found'
+            };
+            request('http://localhost:8888/nonexistent.txt', (err, res) =>{
+                    assert.equal(res.statusCode, error.code);
+                    assert.equal(res.body, error.text);
+                    done()
+            })
+
+        })
     });
 
     describe('POST request', () => {
+        let file;
+        let bigFile;
 
-        fs.unlink('files/small.txt', (err) => {
+        before((done) =>{
+            file = fs.readFileSync('test/small.txt').toString();
+            bigFile = fs.readFileSync('test/big.png').toString();
+            fs.unlink('files/small.txt', (err) => {
+                done()
+            });
         });
-        const file = fs.readFileSync('test/small.txt').toString();
-        const bigFile = fs.readFileSync('test/big.png').toString();
 
         it('POST write file ', (done) => {
             request.post('http://localhost:8888/small.txt', {body: file}, (err, res) => {
