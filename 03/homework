@@ -1,6 +1,6 @@
-написать тесты на файловый сервер
+1. переписать наши тесты на async/await
+2. promise/13-promise-readfile
+  // ЗАДАЧА - прочитать все файлы текущей директории, используя новый readfile
+  // (последовательно или параллельно - как считаете нужным)
 
-промисы и генераторы (учебник)
-
-http://learn.javascript.ru/promise
-http://learn.javascript.ru/generator
+3**. read-stream-task

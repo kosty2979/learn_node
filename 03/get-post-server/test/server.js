@@ -15,7 +15,7 @@ describe('Server tests(async/await):', () => {
 
     let app;
     before( async () => {
-        if( process.env.NODE_ENV !== 'test' ) return done( new Error('set NODE_ENV=test !!!'));
+        if( process.env.NODE_ENV !== 'test' ) throw new Error('set NODE_ENV=test !!!');
         app = await server.listen( PORT );
     });
 
