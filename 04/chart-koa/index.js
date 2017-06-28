@@ -1,20 +1,14 @@
-// A "closer to real-life" app example
-// using 3rd party middleware modules
-// P.S. MWs calls be refactored in many files
 
-// long stack trace (+clarify from co) if needed
 if (process.env.TRACE) {
   require('./libs/trace');
 }
 
 const Koa = require('koa');
 const app = new Koa();
-
 const config = require('config');
 
 const path = require('path');
 const fs = require('fs');
-const events = require('events');
 
 const handlers = fs.readdirSync(path.join(__dirname, 'handlers')).sort();
 handlers.forEach(handler => require('./handlers/' + handler).init(app));
@@ -22,15 +16,13 @@ handlers.forEach(handler => require('./handlers/' + handler).init(app));
 const clients = [];
 
 const Router = require('koa-router');
-
 const router = new Router();
 
-const em = new events.EventEmitter();
 
 
 
 router.get('/subscribe', async (ctx) => {
-     await subscribe(ctx);
+    await subscribe(ctx);
 });
 
 router.post('/publish', async (ctx) => {
@@ -39,22 +31,24 @@ router.post('/publish', async (ctx) => {
 
 app.use(router.routes());
 
-app.listen(config.get('port'), console.log(' server start on localhost:3000'));
+app.listen(config.get('port'), console.log( 'server start on localhost:3000' ));
 
 
 function subscribe(ctx) {
     return new Promise((resolve, reject) => {
-        em.once('message', function (data) {
-            ctx.response.body = data;
-            ctx.res.setHeader('Cache-Control', "no-cache, no-store, private");
-            return resolve();
-        });
 
-        ctx.req.once('close', () => {
+        const  sendMessage = (content) =>{
+           ctx.response.body = content;
+           // ctx.res.setHeader('Cache-Control', "no-cache, no-store, private");
+           return resolve();
+        };
+
+        ctx.req.on('close', () => {
            // if( ctx.response.statusCode === 200 ) return;
+            clients.splice(clients.indexOf(sendMessage), 1);
             return resolve( console.error('session closed') );
         });
-
+        clients.push( sendMessage )
     });
 };
 
@@ -74,7 +68,12 @@ function publish (ctx) {
             return  resolve();
         };
 
-        em.emit('message', ctx.request.body.message);
+
+        clients.forEach(( sendMessage ) => {
+            sendMessage(body.message);
+        });
+
+        clients.length = 0;
         ctx.res.statusCode = 200;
         ctx.res.end("ok");
         return resolve()
