@@ -55,7 +55,12 @@ function subscribe(ctx) {
 function publish (ctx) {
     return new Promise( (resolve, reject) => {
         let body = ctx.request.body;
-
+        if( !body.message ){
+            ctx.res.statusCode = 413;
+            ctx.res.end("no message");
+            return  resolve();
+        };
+        body.message = String(body.message);
         if( !body.message.trim() ){
             ctx.res.statusCode = 413;
             ctx.res.end("no message");
