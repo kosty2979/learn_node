@@ -34,9 +34,9 @@ describe('Server tests(async/await):', () => {
         });
 
         it('GET index.html', async () => {
-            const result = await  rp.get( HOST );
-            assert.equal( result, fileContent );
-            // assert.equal(res.statusCode, 200);
+            const result = await  rp.get( { uri: HOST, resolveWithFullResponse: true } );
+            assert.equal( result.body, fileContent );
+            assert.equal(result.statusCode, 200);
         });
 
         it('GET ../....//..', async () => {
@@ -49,9 +49,9 @@ describe('Server tests(async/await):', () => {
         });
 
         it('GET file', async () => {
-            const result = await rp.get( HOST + '/small.txt');
-            assert.equal( result, file );
-            // assert.equal(res.statusCode, 200)
+            const result = await rp.get( { uri: HOST + '/small.txt', resolveWithFullResponse: true });
+            assert.equal( result.body, file );
+            assert.equal(result.statusCode,  200)
         });
 
         it('GET non-existent file', async () => {
@@ -76,17 +76,18 @@ describe('Server tests(async/await):', () => {
         });
 
         it('POST write file ', async () => {
-            await rp.post( HOST + '/small.txt', {body: file});
+            const write = await rp.post( { uri:HOST + '/small.txt', form:  file,  resolveWithFullResponse: true } );
             const result = await fs.readFile( config.get('filesRoot') + '/small.txt' );
             assert.equal( file, result.toString());
-            // assert.equal(res.statusCode, 201);
+            assert.equal( write.statusCode, 201);
+            assert.equal( write.body, 'all done');
         });
 
         it('POST write exist file', async ()=> {
             let modtime = await fs.stat(config.get('filesRoot') + '/small.txt');
             let newModtime;
             try {
-               await rp.post( HOST + "/small.txt", { body : file });
+                await rp.post( HOST + "/small.txt", { body : file });
            } catch( err ){
                 newModtime = await fs.stat(config.get('filesRoot') + '/small.txt');
                 assert.equal( err.statusCode, 409 );
@@ -95,76 +96,49 @@ describe('Server tests(async/await):', () => {
                 await fs.unlink(config.get('filesRoot') + '/small.txt');
            }
         });
-    //
-    //     it('POST write exist file', (done) => {
-    //         const error = {
-    //             code: 409,
-    //             text: 'File exist'
-    //         };
-    //         request.post( HOST + 'small.txt', {body: file}, (err, res) => {
-    //             assert.equal(res.statusCode, error.code);
-    //             assert.equal(res.body, error.text);
-    //
-    //             fs.unlink('files/small.txt', (err) => {
-    //                 done(err)
-    //             });
-    //         })
-    //     });
-    //
-    //     it("POST write big file", (done) => {
-    //         const error = {
-    //             code: 413,
-    //             text: 'File is too big!'
-    //         };
-    //         request.post(HOST + 'big.png', {body: bigFile}, (err, res) => {
-    //             assert.equal(res.statusCode, error.code);
-    //             assert.equal(res.body, error.text);
-    //             fs.readFile('files/big.png', (err, content) => {
-    //                 if (err) {
-    //                     assert.equal(err.code, 'ENOENT');
-    //                     done()
-    //                 } else {
-    //                     done(new Error("file saved and exist!!"))
-    //                 }
-    //             })
-    //         })
-    //     });
 
+        it('POST write big file', async () => {
+            try {
+                await rp.post( HOST + '/big.png', { body: bigFile });
+            } catch ( err ){
+                assert.equal( err.statusCode, 413);
+                assert.equal( err.error, 'File is too big!');
+            };
+            try {
+                await fs.readFile( HOST + '/big.png' );
+            } catch( err ){
+                assert.equal(err.code, 'ENOENT');
+            }
+        })
 
     });
 
-    // describe('DELETE request', () => {
-    //
-    //     let file;
-    //     before((done => {
-    //         file = fs.readFileSync('test/small.txt').toString();
-    //         fs.writeFileSync('files/small.txt', file);
-    //         done()
-    //
-    //     }));
-    //
-    //     it('DELETE file', (done) => {
-    //         request.delete('http://localhost:8888/small.txt', (err, res) => {
-    //             assert.equal(res.statusCode, 200);
-    //             assert.equal(res.body, 'OK');
-    //             fs.readFile('files/small.txt', (err, content) => {
-    //                 if (err) {
-    //                     assert.equal(err.code, 'ENOENT');
-    //                     done()
-    //                 } else {
-    //                     done(new Error("file saved and exist!!"))
-    //                 }
-    //             })
-    //         })
-    //     });
-    //
-    //     it('DELETE non-existent file', (done) => {
-    //         request.delete('http://localhost:8888/small.txt', (err, res) => {
-    //             assert.equal(res.statusCode, 404);
-    //             assert.equal(res.body, 'Not found');
-    //             done()
-    //         })
-    //     })
-    //
-    // })
+    describe('DELETE request', () => {
+
+        before( async () => {
+            await fs.copySync(`${fixtureDir}/small.txt`, config.get('filesRoot') + '/small.txt');
+        });
+
+        it('DELETE file', async () => {
+            const result = await rp.delete({ uri:HOST + '/small.txt', resolveWithFullResponse: true });
+            assert.equal(result.statusCode, 200);
+            assert.equal(result.body, 'OK');
+            try {
+                await fs.readFile( config.get('filesRoot') + '/small.txt');
+            } catch (err) {
+                assert.equal( err.code,  'ENOENT')
+            }
+        });
+
+        it('DELETE file', async () => {
+            try {
+                const result = await rp.delete({ uri : HOST + '/small.txt', resolveWithFullResponse: true  });
+            } catch ( err ) {
+                assert.equal(err.statusCode,  404);
+                assert.equal(err.error, 'Not found');
+            }
+        });
+
+
+    })
 });
