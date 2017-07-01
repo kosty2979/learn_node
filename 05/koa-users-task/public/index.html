@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+  <script
+          src="https://code.jquery.com/jquery-2.2.4.min.js"
+          integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+          crossorigin="anonymous"></script>
+</head>
+<body>
+    <h3>get all user</h3>
+    <div class=>
+        <button id="getUser" class="btn btn-default">get All user</button>
+        <p class="answer"></p>
+    </div>
+    <hr>
+     <h3>create User</h3>
+    <div class="">
+       <p> <label> email <input id="email" type="text"></label></p>
+        <p> <label> name <input id="name" type="text"></label></p>
+         <button id="addUser" class="btn btn-default">add user</button>
+        <p class="answer"></p>
+    </div>
+    <hr>
+    <h3>get user id</h3>
+    <div class="">
+        <p><label> id <input id="getId" type="text"></label></p>
+        <button id="getDataId" class="btn btn-default">get user data</button>
+        <p class="answer"></p>
+    </div>
+    <hr>
+    <h3>delete user id</h3>
+    <div class="">
+        <p><label> id <input id="deleteId" type="text"></label></p>
+       <button id="getDeleteId" class="btn btn-default">delete</button>
+    </div>
+    <hr>
+    <h3>patch user info</h3>
+    <div class="">
+        <p> <label> id <input id="patchId" type="text"></label></p>
+        <p> <label> email <input id="patchemail" type="text"></label></p>
+        <p><label> name <input id="patchname" type="text"></label></p>
+        <button id="patchData" class="btn btn-default">patch user data</button>
+        <p class="answer"></p>
+    </div>
+
+</body>
+<script>
+  $('#getUser').on('click', function(e){
+      $.ajax({
+          url: "/users",
+          type: "GET",
+          success: function(data){
+            $(e.currentTarget).parent('div').find('p.answer').html(JSON.stringify(data))
+          },
+          error:function(data, textStatus, errorThrown){
+          }
+      })
+  });
+  $('#getDataId').on('click', function(e){
+      var url = "/users/" + $('#getId').val();
+      var el= e.currentTarget
+      $.ajax({
+          url: url ,
+          type: "GET",
+          success: function(data){
+              $(el).parent('div').find('p.answer').html(JSON.stringify(data))
+          },
+          error:function(data, textStatus, errorThrown){
+          }
+      })
+  })
+  $('#getDeleteId').on('click', function(e){
+      var url = "/users/" + $('#deleteId').val()
+      $.ajax({
+          url: url ,
+          type: "DELETE",
+          success: function(data){
+              $(e.currentTarget).parent('div').find('p.answer').html(JSON.stringify(data))
+          },
+          error:function(data, textStatus, errorThrown){
+          }
+      })
+  })
+  $('#addUser').on('click', function(e){
+      var name =  $('#name').val();
+      var email = $('#email').val();
+      $.ajax({
+          url: "/users",
+          type: "POST",
+          data: { name: name, email: email },
+          success: function(data){
+              $(e.currentTarget).parent('div').find('p.answer').html(JSON.stringify(data))
+          },
+          error:function(data, textStatus, errorThrown){
+          }
+      })
+  })
+  $('#patchData').on('click', function(e){
+      var name =  $('#patchname').val();
+      var email = $('#patchemail').val();
+      var url = "/users/" + $('#patchId').val();
+      var el = e.currentTarget;
+      $.ajax({
+          url: url,
+          type: "PATCH",
+          data: { name: name, email: email },
+          success: function(data){
+              $(el).parent('div').find('p.answer').html(JSON.stringify(data))
+          },
+          error:function(data, textStatus, errorThrown){
+
+          }
+      })
+  })
+</script>
+</html>
