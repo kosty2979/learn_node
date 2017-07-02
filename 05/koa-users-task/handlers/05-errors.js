@@ -3,12 +3,14 @@ exports.init = app => app.use(async (ctx, next) => {
   try {
     await next();
   } catch (e) {
+      console.log(e)
     if(e.name ='ValidationError'){
-        const error = Object.keys(e.errors).map(key => {
-         return {[e.errors[key].path] : e.errors[key].message}
+        const error = {};
+        Object.keys(e.errors).map((key, index) => {
+         error[index] = {[e.errors[key].path] : e.errors[key].message}
         });
         ctx.status = 400;
-        ctx.body = error;
+        ctx.body= error;
         return
       }
     if (e.status) {

@@ -32,8 +32,13 @@ router.post('/users', async (ctx) => {
 });
 
 router.get('/users/:id', async (ctx)=> {
-    const user = await User.findById(ctx.params.id)
-    if(user) ctx.body = user;
+    try {
+        const user = await User.findById(ctx.params.id)
+        if(user) ctx.body = user;
+    } catch(e){
+        ctx.status = 404;
+    }
+
 })
 
 router.patch('/users/:id', async (ctx) => {
@@ -42,13 +47,8 @@ router.patch('/users/:id', async (ctx) => {
     if(ctx.request.body.name) update.displayName = ctx.request.body.name;
 
     const user = await User.findByIdAndUpdate(
-        ctx.params.id,
-        {
-            email : ctx.request.body.email,
-            displayName: ctx.request.body.name
-        },
-        { new: true, runValidator: true }
-    )
+        ctx.params.id, update, { new: true, runValidators: true }
+    );
     if(user)ctx.body = user;
 });
 
