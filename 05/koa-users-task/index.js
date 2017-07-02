@@ -32,7 +32,7 @@ router.post('/users', async (ctx) => {
 });
 
 router.get('/users/:id', async (ctx)=> {
-    const user = await User.findById(ctx.params.id);
+    const user = await User.findById(ctx.params.id)
     if(user) ctx.body = user;
 })
 
@@ -40,17 +40,21 @@ router.patch('/users/:id', async (ctx) => {
     const update={};
     if(ctx.request.body.email) update.email = ctx.request.body.email;
     if(ctx.request.body.name) update.displayName = ctx.request.body.name;
+
     const user = await User.findByIdAndUpdate(
-            ctx.params.id,
-            update,
-            { new: true, runValidator: true }
-        )
-    ctx.body = user
+        ctx.params.id,
+        {
+            email : ctx.request.body.email,
+            displayName: ctx.request.body.name
+        },
+        { new: true, runValidator: true }
+    )
+    if(user)ctx.body = user;
 });
 
 router.delete('/users/:id', async (ctx) => {
     const user = await User.findByIdAndRemove(ctx.params.id);
-    ctx.body = 'ok'
+    if (user) ctx.body = 'ok'
 });
 
 app.use(router.routes());
